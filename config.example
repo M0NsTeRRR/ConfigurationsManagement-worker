@@ -1,0 +1,11 @@
+---
+CONFIGURATIONSMANAGEMENT:
+  BASE_URL: ""     # Base URL of ConfigurationsManagement
+ANSIBLE:
+  VAULT_SECRET: "" # Ansible vault secret
+RABBITMQ:
+  HOST: ""         # RabbitMQ hostname or IP
+  PORT: 5672       # RabbitMQ port
+  QUEUE: "tasks"   # RabbitMQ queue
+  LOGIN: ""        # RabbitMQ login
+  PASSWORD: ""     # RabbitMQ password

@@ -1,0 +1,12 @@
+---
+- name: Create required subdirectories
+  file:
+    path: "/tmp/{{ path.split('/')[:-1] | join('/') }}"
+    state: directory
+  when: path.find('/') != -1
+  delegate_to: localhost
+- name: Create required subdirectories
+  file:
+    path: "/tmp/{{ path.split('/')[:-1] | join('/') }}"
+    state: directory
+  when: path.find('/') != -1

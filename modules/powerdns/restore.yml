@@ -1,0 +1,46 @@
+---
+- name: Restore powerdns configuration
+  hosts: localhost
+  connection: local
+  vars:
+    gitea_token: "{{ gitea_token }}"
+    gitea_url: "{{ gitea_url }}"
+    gitea_owner: "{{ gitea_owner }}"
+    gitea_repository: "{{ gitea_repository }}"
+    path: "{{ path }}"
+    hostname: "{{ hostname }}"
+    folder_path: "{{ path.split('/')[:-1] | join('/') if path.find('/') != -1 else '' }}"
+    powerdns_base_url: "http://{{ hostname }}:8080/api/v1"
+  tasks:
+    - name: Include create subdirectories
+      include_tasks: ../create_subdirectories.yml
+    - name: Include gitea download
+      include_tasks: ../gitea_download.yml
+    - name: Unarchive powerdns configuration
+      unarchive:
+        src: "/tmp/{{ path }}"
+        dest: "/tmp/{{ folder_path }}"
+    - name: Find zone files
+      find:
+        paths: "/tmp/{{ folder_path }}"
+        file_type: file
+        excludes: '*.zip'
+      register: zone_files
+    - name: Include GET zones
+      include_tasks: get_zones.yml
+    - name: DELETE a zone
+      uri:
+        url: "{{ powerdns_base_url }}/servers/localhost/zones/{{ item.id }}"
+        method: DELETE
+        status_code: 204
+        headers:
+          X-Api-Key: "{{ powerdns.api_key }}"
+      ignore_errors: yes
+      with_items: "{{ zones.json }}"
+    - name: Include restore zone
+      include_tasks: restore_zone.yml
+      with_items: "{{ zone_files.files }}"
+    - name: Remove files
+      file:
+        path: "/tmp/{{ folder_path }}"
+        state: absent

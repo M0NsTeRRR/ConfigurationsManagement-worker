@@ -1,0 +1,23 @@
+---
+- name: POST a zone
+  uri:
+    url: "{{ powerdns_base_url }}/servers/localhost/zones"
+    method: POST
+    return_content: yes
+    body_format: json
+    validate_certs: no
+    body: '{{ lookup("file", item.path) | from_json }}'
+    status_code: 201
+    headers:
+      Content-Type: application/json
+      X-Api-Key: "{{ powerdns.api_key }}"
+
+- name: Notify slaves
+  uri:
+    url: "{{ powerdns_base_url }}/servers/localhost/zones/{{ item.path.split('/')[-1] }}/notify"
+    method: PUT
+    return_content: yes
+    status_code: 200
+    headers:
+      X-Api-Key: "{{ powerdns.api_key }}"
+  ignore_errors: yes

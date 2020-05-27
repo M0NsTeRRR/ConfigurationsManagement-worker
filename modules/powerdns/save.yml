@@ -1,0 +1,33 @@
+---
+- name: Backup powerdns configuration
+  hosts: localhost
+  connection: local
+  vars:
+    gitea_token: "{{ gitea_token }}"
+    gitea_url: "{{ gitea_url }}"
+    gitea_owner: "{{ gitea_owner }}"
+    gitea_repository: "{{ gitea_repository }}"
+    path: "{{ path }}"
+    hostname: "{{ hostname }}"
+    folder_path: "{{ path.split('/')[:-1] | join('/') if path.find('/') != -1 else '' }}"
+    powerdns_base_url: "http://{{ hostname }}:8080/api/v1"
+  tasks:
+    - name: Include create subdirectories
+      include_tasks: ../create_subdirectories.yml
+    - name: Include GET zones
+      include_tasks: get_zones.yml
+    - name: Include save zone
+      include_tasks: save_zone.yml
+      with_items: "{{ zones.json }}"
+    - name: Archive powerdns configuration
+      archive:
+        path: "/tmp/{{ folder_path }}/*"
+        dest: "/tmp/{{ path }}"
+        exclude_path: "/tmp/{{ path }}"
+        format: zip
+    - name: Include gitea upload
+      include_tasks: ../gitea_upload.yml
+    - name: Remove files
+      file:
+        path: "/tmp/{{ folder_path }}"
+        state: absent

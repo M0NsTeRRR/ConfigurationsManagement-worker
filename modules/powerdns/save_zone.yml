@@ -1,0 +1,15 @@
+---
+- name: GET a zone
+  uri:
+    url: "{{ powerdns_base_url }}/servers/localhost/zones/{{ item.id }}"
+    method: GET
+    return_content: yes
+    body_format: json
+    status_code: 200
+    headers:
+      X-Api-Key: "{{ powerdns.api_key }}"
+  register: zone
+- name: Save zone configuration
+  copy:
+    content: "{{ zone.json | combine({'nameservers': []})  }}"
+    dest: "/tmp/{{ folder_path }}/{{ item.id }}"

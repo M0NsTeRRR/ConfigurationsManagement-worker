@@ -1,0 +1,31 @@
+---
+- name: Restore pfsense configuration with pfsense_fauxapi
+  hosts: localhost
+  connection: local
+  vars:
+    gitea_token: "{{ gitea_token }}"
+    gitea_url: "{{ gitea_url }}"
+    gitea_owner: "{{ gitea_owner }}"
+    gitea_repository: "{{ gitea_repository }}"
+    path: "{{ path }}"
+    hostname: "{{ hostname }}"
+  tasks:
+    - name: Include create subdirectories
+      include_tasks: ../create_subdirectories.yml
+    - name: Include gitea download
+      include_tasks: ../gitea_download.yml
+    - name: Include pfsense_fauxapi API authentication
+      include_tasks: api_authentication.yml
+    - name: POST pfsense configuration
+      uri:
+        url: "https://{{ hostname }}/fauxapi/v1/?action=config_set"
+        method: POST
+        return_content: yes
+        body_format: json
+        body: "{{ lookup('file', '/tmp/' + path, rstrip=False) }}"
+        status_code: 200
+        headers:
+          Content-Type: application/json
+          fauxapi-auth: "{{ fauxapi_auth.stdout }}"
+      register: result
+      failed_when: result.json.message != 'ok'

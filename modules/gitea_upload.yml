@@ -1,0 +1,37 @@
+---
+- name: Check if file exist
+  uri:
+    url: "{{ gitea_url }}/api/v1/repos/{{ gitea_owner }}/{{ gitea_repository }}/contents/{{ path }}"
+    method: GET
+    return_content: yes
+    body_format: json
+    status_code:
+      - 200
+      - 404
+    headers:
+      Authorization: "token {{ gitea_token }}"
+  register: result
+- name: PUT file
+  uri:
+    url: "{{ gitea_url }}/api/v1/repos/{{ gitea_owner }}/{{ gitea_repository }}/contents/{{ path }}"
+    method: PUT
+    return_content: yes
+    body_format: json
+    body: {'content': '{{ lookup("file", "/tmp/" + path, rstrip=False) | b64encode }}', 'sha': '{{ result.json.sha }}' }
+    status_code: 200
+    headers:
+      Content-Type: application/json
+      Authorization: "token {{ gitea_token }}"
+  when: result.status == 200
+- name: POST file
+  uri:
+    url: "{{ gitea_url }}/api/v1/repos/{{ gitea_owner }}/{{ gitea_repository }}/contents/{{ path }}"
+    method: POST
+    return_content: yes
+    body_format: json
+    body: {'content': '{{ lookup("file", "/tmp/" + path, rstrip=False) | b64encode }}'}
+    status_code: 201
+    headers:
+      Content-Type: application/json
+      Authorization: "token {{ gitea_token }}"
+  when: result.status != 200

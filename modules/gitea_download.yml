@@ -1,0 +1,8 @@
+---
+- name: Download file
+  get_url:
+    url: "{{ gitea_url }}/api/v1/repos/{{ gitea_owner }}/{{ gitea_repository }}/raw/{{ path }}"
+    dest: "/tmp/{{ path }}"
+    headers:
+      Authorization: "token {{ gitea_token }}"
+  register: result

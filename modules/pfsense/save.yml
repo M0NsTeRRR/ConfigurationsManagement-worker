@@ -1,0 +1,36 @@
+---
+- name: Backup pfsense configuration with pfsense_fauxapi
+  hosts: localhost
+  connection: local
+  vars:
+    gitea_token: "{{ gitea_token }}"
+    gitea_url: "{{ gitea_url }}"
+    gitea_owner: "{{ gitea_owner }}"
+    gitea_repository: "{{ gitea_repository }}"
+    path: "{{ path }}"
+    hostname: "{{ hostname }}"
+  tasks:
+    - name: Include create subdirectories
+      include_tasks: ../create_subdirectories.yml
+    - name: Include pfsense_fauxapi API authentication
+      include_tasks: api_authentication.yml
+    - name: GET pfsense configuration
+      uri:
+        url: "https://{{ hostname }}/fauxapi/v1/?action=config_get"
+        method: GET
+        return_content: yes
+        body_format: json
+        status_code: 200
+        headers:
+          fauxapi-auth: "{{ fauxapi_auth.stdout }}"
+      register: result
+    - name: Save pfsense configuration
+      copy:
+        content: "{{ result.json.data.config }}"
+        dest: "/tmp/{{ path }}"
+    - name: Include gitea upload
+      include_tasks: ../gitea_upload.yml
+    - name: Remove file
+      file:
+        path: "/tmp/{{ path }}"
+        state: absent

@@ -1,0 +1,13 @@
+---
+- name: Get fauxapi_timestamp
+  shell: "date -u +%Y%m%dZ%H%M%S"
+  register: fauxapi_timestamp
+- name: Get fauxapi_nonce
+  shell: "head -c 40 /dev/urandom | (md5sum 2>/dev/null  || md5 2>/dev/null) | head -c 8"
+  register: fauxapi_nonce
+- name: Get fauxapi_hash
+  shell: "echo -n {{ pfsense.fauxapi_apisecret }}{{ fauxapi_timestamp.stdout }}{{ fauxapi_nonce.stdout }} | (sha256sum 2>/dev/null  || shasum -a 256 2>/dev/null) | cut -d' ' -f1"
+  register: fauxapi_hash
+- name: Get fauxapi_auth
+  shell: "echo {{ pfsense.fauxapi_apikey }}:{{ fauxapi_timestamp.stdout }}:{{ fauxapi_nonce.stdout }}:{{ fauxapi_hash.stdout }}"
+  register: fauxapi_auth

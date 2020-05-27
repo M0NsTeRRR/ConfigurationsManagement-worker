@@ -1,0 +1,34 @@
+---
+- name: Backup asterisk configuration
+  hosts: all,!localhost
+  connection: ssh
+  vars:
+    gitea_token: "{{ gitea_token }}"
+    gitea_url: "{{ gitea_url }}"
+    gitea_owner: "{{ gitea_owner }}"
+    gitea_repository: "{{ gitea_repository }}"
+    path: "{{ path }}"
+  tasks:
+    - name: Include create subdirectories
+      include_tasks: ../create_subdirectories.yml
+    - name: Archive asterisk configuration
+      archive:
+        path:
+          - /etc/asterisk/extensions.conf
+          - /etc/asterisk/features.conf
+          - /etc/asterisk/pjsip.conf
+          - /etc/asterisk/voicemail.conf
+        dest: "/tmp/{{ path }}"
+        format: zip
+    - name: Fetch archive from asterisk
+      fetch:
+        src: "/tmp/{{ path }}"
+        dest: "/tmp/{{ path }}"
+        flat: yes
+    - name: Include gitea upload
+      include_tasks: ../gitea_upload.yml
+    - name: Remove file
+      file:
+        path: "/tmp/{{ path }}"
+        state: absent
+      delegate_to: localhost

@@ -1,0 +1,31 @@
+---
+- name: Restore asterisk configuration
+  hosts: all,!localhost
+  connection: ssh
+  vars:
+    gitea_token: "{{ gitea_token }}"
+    gitea_url: "{{ gitea_url }}"
+    gitea_owner: "{{ gitea_owner }}"
+    gitea_repository: "{{ gitea_repository }}"
+    path: "{{ path }}"
+  tasks:
+    - name: Include create subdirectories
+      include_tasks: ../create_subdirectories.yml
+    - name: Include gitea download
+      include_tasks: ../gitea_download.yml
+    - name:
+      unarchive:
+        src: "/tmp/{{ path }}"
+        dest: /etc/asterisk
+        remote_src: yes
+    - name: restart asterisk
+      service:
+        name: asterisk
+        state: restarted
+      become: yes
+      become_method: sudo
+    - name: Remove file
+      file:
+        path: "/tmp/{{ path }}"
+        state: absent
+      delegate_to: localhost
