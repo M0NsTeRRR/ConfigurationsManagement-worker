@@ -5,7 +5,6 @@
     method: POST
     return_content: yes
     body_format: json
-    validate_certs: no
     body: '{{ lookup("file", item.path) | from_json }}'
     status_code: 201
     headers:
